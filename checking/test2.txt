@@ -1,0 +1,10 @@
+kati;
+haha;
+function pop(){return;}
+
+{
+    local kati;
+    pop;
+    local haha;
+    function pop(x,y){return;}
+}
