@@ -9,6 +9,10 @@ center_board_position: tuple[int, int] = (1, 1)
 is_empty: bool = True
 
 
+def defend_opponent_fork(opponent_player, game_state):
+    return find_fork_move(opponent_player, game_state)
+
+
 def get_actions(game_state: list[list[str]], current_player: str):
     opponent_player = 'O' if current_player == 'X' else 'X'
 
@@ -23,6 +27,10 @@ def get_actions(game_state: list[list[str]], current_player: str):
 
     potential_actions = check_opponent_winning_move(opponent_player, row_lines, column_lines,
                                                     diagonal_line, anti_diagonal_line)
+    if potential_actions is not None:
+        return potential_actions
+
+    potential_actions = defend_opponent_fork(opponent_player, game_state)
     if potential_actions is not None:
         return potential_actions
 
