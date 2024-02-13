@@ -2,7 +2,7 @@ from typing import Any
 from random import choice
 
 empty_cell: str = ''
-infinity: int = 10000
+infinity: int = 1000
 player_x: str = 'X'
 player_o: str = 'O'
 center_board_position: tuple[int, int] = (1, 1)
