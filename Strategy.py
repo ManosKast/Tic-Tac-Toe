@@ -9,10 +9,6 @@ center_board_position: tuple[int, int] = (1, 1)
 is_empty: bool = True
 
 
-def defend_opponent_fork(opponent_player, game_state):
-    return find_fork_move(opponent_player, game_state)
-
-
 def get_actions(game_state: list[list[str]], current_player: str):
     opponent_player = 'O' if current_player == 'X' else 'X'
 
@@ -132,3 +128,33 @@ def find_fork_move(symbol: str, game_board: list[list[str]]) -> list[tuple[int, 
                 game_board[i][j] = empty_cell
 
     return fork_moves if len(fork_moves) > 0 else alternative_moves if len(alternative_moves) > 0 else None
+
+def defend_opponent_fork(opponent_player, game_state):
+    alternative_moves = []
+
+    def is_fork():
+        row_lines, column_lines, diagonal_line, anti_diagonal_line = extract_lines(game_state)
+        threats = 0
+        for row in row_lines:
+            if check_threat(opponent_player, row):
+                threats += 1
+        for col in column_lines:
+            if check_threat(opponent_player, col):
+                threats += 1
+        if check_threat(opponent_player, diagonal_line):
+            threats += 1
+        if check_threat(opponent_player, anti_diagonal_line):
+            threats += 1
+        if threats == 1:
+            alternative_moves.append((i, j))
+        return threats >= 2
+
+    for i in range(3):
+        for j in range(3):
+            if game_state[i][j] == empty_cell:
+                game_state[i][j] = opponent_player
+                if is_fork():
+                    return [(i, j)]
+                game_state[i][j] = empty_cell
+
+    return alternative_moves if len(alternative_moves) > 0 else None
