@@ -1,10 +1,10 @@
 import pygame
 import sys
-from TicTacToeAI import TicTacToeAI, wins  # Make sure to import your AI class
-from model import TicTacToeView  # Import your View class
+from TicTacToeAI import TicTacToeAI, check_wins
+from view import TicTacToeView
 
 
-def get_winning_line(board, player):
+def get_winning_sequence(board, player):
     # Check rows
     for row in range(3):
         if all(board[row][col] == player for col in range(3)):
@@ -30,11 +30,11 @@ class TicTacToeController:
         self.game_over = False
         self.turn = 'X'  # 'X' always starts first
 
-    def run(self):
-        self.choose_symbol()  # Start with symbol choice screen
+    def start_game(self):
+        self.select_symbol()  # Start with symbol choice screen
         while True:
-            if self.is_terminal():
-                self.wait_for_rematch()
+            if self.is_game_over():
+                self.wait_for_new_game()
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -42,14 +42,14 @@ class TicTacToeController:
                     sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if self.is_players_turn():
-                        self.handle_mouse_click(event.pos)
+                        self.process_mouse_click(event.pos)
 
-            if not self.is_players_turn():
-                self.ai_move()
+            if self.is_ai_turn():
+                self.ai_turn()
             self.view.draw_board(self.board)  # Draw the board one last time when the game is over
-            pygame.time.wait(50)  # Reduce the wait time to 50 milliseconds
+            pygame.time.wait(50)  # To reduce CPU usage
 
-    def choose_symbol(self):
+    def select_symbol(self):
         self.view.display_symbol_choice()
         symbol_chosen = False
         while not symbol_chosen:
@@ -65,15 +65,15 @@ class TicTacToeController:
                         symbol_chosen = True
                         # If player chooses 'O', AI makes the first move as 'X'
                         if symbol == 'O':
-                            self.ai_move()
+                            self.ai_turn()
 
-    def ai_move(self):
-        ai_move = self.ai.getNextMove(self.board)
+    def ai_turn(self):
+        ai_move = self.ai.get_next_move(self.board)
         if ai_move:
-            self.board[ai_move[0]][ai_move[1]] = self.ai.ai
+            self.board[ai_move[0]][ai_move[1]] = self.ai.ai_symbol
             self.switch_turn()
 
-    def handle_mouse_click(self, position):
+    def process_mouse_click(self, position):
         row, col = position[1] // self.view.cell_size, position[0] // self.view.cell_size
         if self.board[row][col] == '' and not self.game_over:
             self.make_move(row, col, self.current_player)
@@ -85,13 +85,13 @@ class TicTacToeController:
     def switch_turn(self):
         self.turn = 'X' if self.turn == 'O' else 'O'
 
-    def is_terminal(self):
+    def is_game_over(self):
         def check_win():
             # Assuming is_winner is a function that checks if a player has won
-            if wins(self.current_player, self.board):
+            if check_wins(self.current_player, self.board):
                 self.view.display_game_result(f'You Win!')
                 # Assuming get_winning_line is a function that returns the start and end of the winning line
-                start, end = get_winning_line(self.board, self.current_player)
+                start, end = get_winning_sequence(self.board, self.current_player)
                 self.view.draw_winning_line(start, end, self.current_player)
                 self.game_over = True
                 return True
@@ -99,10 +99,10 @@ class TicTacToeController:
 
         def check_loss():
             # Assuming is_winner is a function that checks if a player has won
-            if wins(self.ai.ai, self.board):
+            if check_wins(self.ai.ai_symbol, self.board):
                 # Assuming get_winning_line is a function that returns the start and end of the winning line
-                start, end = get_winning_line(self.board, self.ai.ai)
-                self.view.draw_winning_line(start, end, self.ai.ai)
+                start, end = get_winning_sequence(self.board, self.ai.ai_symbol)
+                self.view.draw_winning_line(start, end, self.ai.ai_symbol)
                 self.view.display_game_result(f'You Lose!')
                 self.game_over = True
                 return True
@@ -121,7 +121,7 @@ class TicTacToeController:
     def is_players_turn(self):
         return self.current_player == self.turn
 
-    def rematch(self):
+    def start_new_game(self):
         # Reset the game state
         self.board = [['' for _ in range(3)] for _ in range(3)]
         self.game_over = False
@@ -130,7 +130,7 @@ class TicTacToeController:
         self.ai = TicTacToeAI('X' if self.current_player == 'O' else 'O')
         self.turn = 'X'
 
-    def wait_for_rematch(self):
+    def wait_for_new_game(self):
         rematch: bool = False
         while not rematch:
             for event in pygame.event.get():
@@ -139,11 +139,14 @@ class TicTacToeController:
                     sys.exit()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if self.view.check_for_rematch(event.pos):
-                        self.rematch()
+                        self.start_new_game()
                         rematch = True
             pygame.time.wait(50)
+
+    def is_ai_turn(self):
+        return self.current_player != self.turn
 
 
 if __name__ == "__main__":
     controller = TicTacToeController()
-    controller.run()
+    controller.start_game()

@@ -1,17 +1,17 @@
-from Strategy import getActions
+from Strategy import get_actions
 
-EMPTY: str = ''
-inf: int = 1000
-PLAYER_1: str = 'X'
-PLAYER_2: str = 'O'
+EMPTY_CELL: str = ''
+INFINITY: int = 1000
+PLAYER_X: str = 'X'
+PLAYER_O: str = 'O'
 CENTER_POSITION: tuple[int, int] = (1, 1)
 
 
-def copy(board: list[list[str]]) -> list[list[str]]:
+def copy_board(board: list[list[str]]) -> list[list[str]]:
     return [row.copy() for row in board]
 
 
-def wins(symbol: str, board: list[list[str]]) -> bool:
+def check_wins(symbol: str, board: list[list[str]]) -> bool:
     def is_horizontal_win():
         for row in board:
             if all(cell == symbol for cell in row):
@@ -27,80 +27,78 @@ def wins(symbol: str, board: list[list[str]]) -> bool:
     def is_diagonal_win():
         return all(board[i][i] == symbol for i in range(3))
 
-    def is_antiDiagonal_win():
+    def is_anti_diagonal_win():
         return all(board[2 - i][i] == symbol for i in range(3))
 
-    return is_horizontal_win() or is_vertical_win() or is_diagonal_win() or is_antiDiagonal_win()
+    return is_horizontal_win() or is_vertical_win() or is_diagonal_win() or is_anti_diagonal_win()
 
 
-def is_terminal(board: list[list[str]]) -> bool:
-    return wins(PLAYER_1, board) or wins(PLAYER_2, board) or all(cell != EMPTY for row in board for cell in row)
+def is_terminal_state(board: list[list[str]]) -> bool:
+    return check_wins(PLAYER_X, board) or check_wins(PLAYER_O, board) or all(cell != EMPTY_CELL for row in board for cell in row)
 
 
-def update_state(coordinates: tuple[int, int], board: list[list[str]], symbol):
+def update_game_state(coordinates: tuple[int, int], board: list[list[str]], symbol):
     [x, y] = coordinates
-    updated_board = copy(board)
+    updated_board = copy_board(board)
     updated_board[x][y] = symbol
     return updated_board
 
 
 class TicTacToeAI:
     def __init__(self, player: str):
-        global PLAYER_1, PLAYER_2
+        global PLAYER_X, PLAYER_O
 
-        self.ai = player
-        self.opponent = 'X' if player == 'O' else 'O'
-        PLAYER_1 = self.opponent
-        PLAYER_2 = self.ai
+        self.ai_symbol = player
+        self.opponent_player = 'X' if player == 'O' else 'O'
+        PLAYER_X = self.opponent_player
+        PLAYER_O = self.ai_symbol
 
-    def utility(self, board):
-        return 1 if wins(self.ai, board) else -1 if wins(self.opponent, board) else 0
+    def calculate_utility(self, board):
+        return 1 if check_wins(self.ai_symbol, board) else -1 if check_wins(self.opponent_player, board) else 0
 
-    def getNextMove(self, board):
-        def miniMax(state):
-            return getMax(state)[1]
+    def get_next_move(self, board):
+        def mini_max(state):
+            return get_max(state)[1]
 
-        def getMax(state: list[list[str]]):
-            if is_terminal(state):
-                return self.utility(state), None
+        def get_max(state: list[list[str]]):
+            if is_terminal_state(state):
+                return self.calculate_utility(state), None
 
             nonlocal alpha, beta
-            actions, maxValue, bestAction = getActions(state, self.ai), -inf, None
+            actions, max_value, best_action = get_actions(state, self.ai_symbol), -INFINITY, None
             for action in actions:
-                result, _ = getMin(update_state(action, state, self.ai))
-                if result > maxValue:
-                    maxValue, bestAction = result, action
+                result, _ = get_min(update_game_state(action, state, self.ai_symbol))
+                if result > max_value:
+                    max_value, best_action = result, action
                     alpha = max(result, alpha)
-                if maxValue > 0 and maxValue > beta:
+                if max_value > 0 and max_value > beta:
                     break
 
-            return maxValue, bestAction
+            return max_value, best_action
 
-        # remove bestAction from min.
-        def getMin(state: list[list[str]]):
-            if is_terminal(state):
-                return self.utility(state), None
+        def get_min(state: list[list[str]]):
+            if is_terminal_state(state):
+                return self.calculate_utility(state), None
 
             nonlocal alpha, beta
-            actions, minValue, bestAction = getActions(state, self.opponent), inf, None
+            actions, min_value, best_action = get_actions(state, self.opponent_player), INFINITY, None
 
             for action in actions:
-                result, _ = getMax(update_state(action, state, self.opponent))
-                if result < minValue:
-                    minValue, bestAction = result, action
+                result, _ = get_max(update_game_state(action, state, self.opponent_player))
+                if result < min_value:
+                    min_value, best_action = result, action
                     beta = min(result, beta)
-                if minValue < 0 and minValue < alpha:
+                if min_value < 0 and min_value < alpha:
                     break
 
-            return minValue, bestAction
+            return min_value, best_action
 
-        alpha, beta = -inf, inf
-        return miniMax(board)
+        alpha, beta = -INFINITY, INFINITY
+        return mini_max(board)
 
     def rematch(self):
-        global PLAYER_1, PLAYER_2
-        self.ai = 'X' if self.ai == 'O' else 'O'
-        self.opponent = 'X' if self.ai == 'O' else 'O'
-        PLAYER_1 = self.opponent
-        PLAYER_2 = self.ai
-
+        global PLAYER_X, PLAYER_O
+        self.ai_symbol = 'X' if self.ai_symbol == 'O' else 'O'
+        self.opponent_player = 'X' if self.ai_symbol == 'O' else 'O'
+        PLAYER_X = self.opponent_player
+        PLAYER_O = self.ai_symbol
