@@ -36,18 +36,12 @@ class TicTacToeController:
             if self.is_game_over():
                 self.wait_for_new_game()
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.is_players_turn():
-                        self.process_mouse_click(event.pos)
-
-            if self.is_ai_turn():
+            if self.is_players_turn():
+                self.process_mouse_click()
+            elif self.is_ai_turn():
                 self.ai_turn()
+
             self.view.draw_board(self.board)  # Draw the board one last time when the game is over
-            pygame.time.wait(50)  # To reduce CPU usage
 
     def select_symbol(self):
         self.view.display_symbol_choice()
@@ -73,10 +67,17 @@ class TicTacToeController:
             self.board[ai_move[0]][ai_move[1]] = self.ai.ai_symbol
             self.switch_turn()
 
-    def process_mouse_click(self, position):
-        row, col = position[1] // self.view.cell_size, position[0] // self.view.cell_size
-        if self.board[row][col] == '' and not self.game_over:
-            self.make_move(row, col, self.current_player)
+    def process_mouse_click(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if self.is_players_turn():
+                    position = event.pos
+                    row, col = position[1] // self.view.cell_size, position[0] // self.view.cell_size
+                    if self.board[row][col] == '' and not self.game_over:
+                        self.make_move(row, col, self.current_player)
 
     def make_move(self, row, col, player):
         self.board[row][col] = player
@@ -125,7 +126,7 @@ class TicTacToeController:
         # Reset the game state
         self.board = [['' for _ in range(3)] for _ in range(3)]
         self.game_over = False
-        # Switch the player's symbol
+        # Switch <the> player's symbol
         self.current_player = 'X' if self.current_player == 'O' else 'O'
         self.ai = TicTacToeAI('X' if self.current_player == 'O' else 'O')
         self.turn = 'X'
