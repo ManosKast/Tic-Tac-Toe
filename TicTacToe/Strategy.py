@@ -1,122 +1,126 @@
 from typing import Any
 from random import choice
 
-emptyCell: str = ''
+empty_cell: str = ''
 infinity: int = 1000
-playerX: str = 'X'
-playerO: str = 'O'
-centerBoardPosition: tuple[int, int] = (1, 1)
-isEmpty: bool = True
+player_x: str = 'X'
+player_o: str = 'O'
+center_board_position: tuple[int, int] = (1, 1)
+is_empty: bool = True
 
 
-def getActions(gameState: list[list[str]], currentPlayer: str):
-    opponentPlayer = 'O' if currentPlayer == 'X' else 'X'
+def get_actions(game_state: list[list[str]], current_player: str):
+    opponent_player = 'O' if current_player == 'X' else 'X'
 
-    if isInitialState(gameState):
-        return selectRandomCorner()
+    if is_initial_state(game_state):
+        return select_random_corner()
 
-    rowLines, columnLines, diagonalLine, antiDiagonalLine = extractLines(gameState)
+    row_lines, column_lines, diagonal_line, anti_diagonal_line = extract_lines(game_state)
 
-    potentialActions = checkWinningMove(currentPlayer, rowLines, columnLines, diagonalLine, antiDiagonalLine)
-    if potentialActions is not None:
-        return potentialActions
+    potential_actions = check_winning_move(current_player, row_lines, column_lines, diagonal_line, anti_diagonal_line)
+    if potential_actions is not None:
+        return potential_actions
 
-    potentialActions = checkOpponentWinningMove(opponentPlayer, rowLines, columnLines, diagonalLine, antiDiagonalLine)
-    if potentialActions is not None:
-        return potentialActions
+    potential_actions = check_opponent_winning_move(opponent_player, row_lines, column_lines,
+                                                    diagonal_line, anti_diagonal_line)
+    if potential_actions is not None:
+        return potential_actions
 
-    potentialActions = findForkMove(currentPlayer, gameState)
-    if potentialActions is not None:
-        return potentialActions
+    potential_actions = find_fork_move(current_player, game_state)
+    if potential_actions is not None:
+        return potential_actions
 
-    return calculatePossibleMoves(gameState)
+    return calculate_possible_moves(game_state)
 
 
-def isInitialState(gameState: list[list[str]]) -> bool:
-    for row in gameState:
+def is_initial_state(game_state: list[list[str]]) -> bool:
+    for row in game_state:
         for cell in row:
-            if cell != emptyCell:
+            if cell != empty_cell:
                 return False
     return True
 
 
-def calculatePossibleMoves(gameBoard: list[list[str]]) -> list[tuple[int, int]]:
-    possibleMoves = []
+def calculate_possible_moves(game_board: list[list[str]]) -> list[tuple[int, int]]:
+    possible_moves = []
     for row in range(3):
         for col in range(3):
-            if gameBoard[row][col] == emptyCell:
-                possibleMoves.append((row, col))
-    return possibleMoves
+            if game_board[row][col] == empty_cell:
+                possible_moves.append((row, col))
+    return possible_moves
 
 
-def selectRandomCorner():
+def select_random_corner():
     return [choice([(0, 0), (0, 2), (2, 0), (2, 2)])]
 
 
-def checkOpponentStartedInCorner(gameBoard: list[list[str]]) -> bool:
-    return gameBoard[0][0] == playerX or gameBoard[0][2] == playerX or gameBoard[2][0] == playerX or gameBoard[2][2] == playerX
+def check_opponent_started_in_corner(game_board: list[list[str]]) -> bool:
+    return game_board[0][0] == player_x or game_board[0][2] == player_x or game_board[2][0] == player_x or \
+        game_board[2][2] == player_x
 
 
-def extractLines(gameBoard: list[list[str]]) -> tuple[list[list[str]], list[list[str]], list[str], list[str]]:
-    rowLines = [row for row in gameBoard]
-    columnLines = [[gameBoard[row][col] for row in range(3)] for col in range(3)]
-    diagonalLine = [gameBoard[i][i] for i in range(3)]
-    antiDiagonalLine = [gameBoard[2 - i][i] for i in range(3)]
-    return rowLines, columnLines, diagonalLine, antiDiagonalLine
+def extract_lines(game_board: list[list[str]]) -> tuple[list[list[str]], list[list[str]], list[str], list[str]]:
+    row_lines = [row for row in game_board]
+    column_lines = [[game_board[row][col] for row in range(3)] for col in range(3)]
+    diagonal_line = [game_board[i][i] for i in range(3)]
+    anti_diagonal_line = [game_board[2 - i][i] for i in range(3)]
+    return row_lines, column_lines, diagonal_line, anti_diagonal_line
 
 
-def checkThreat(symbol: str, line: list[str]) -> bool:
-    return line.count(symbol) == 2 and line.count(emptyCell) == 1
+def check_threat(symbol: str, line: list[str]) -> bool:
+    return line.count(symbol) == 2 and line.count(empty_cell) == 1
 
 
-def checkWinningMove(symbol: str, rowLines, columnLines, diagonalLine, antiDiagonalLine) -> list[tuple[int | Any, Any]] | None:
+def check_winning_move(symbol: str, row_lines, column_lines, diagonal_line, anti_diagonal_line) -> \
+                                                                                    list[tuple[int | Any, Any]] | None:
     for i in range(3):
-        if checkThreat(symbol, rowLines[i]):
-            return [(i, rowLines[i].index(emptyCell))]
+        if check_threat(symbol, row_lines[i]):
+            return [(i, row_lines[i].index(empty_cell))]
 
-        if checkThreat(symbol, columnLines[i]):
-            return [(columnLines[i].index(emptyCell), i)]
+        if check_threat(symbol, column_lines[i]):
+            return [(column_lines[i].index(empty_cell), i)]
 
-    if checkThreat(symbol, diagonalLine):
-        return [(diagonalLine.index(emptyCell), diagonalLine.index(emptyCell))]
+    if check_threat(symbol, diagonal_line):
+        return [(diagonal_line.index(empty_cell), diagonal_line.index(empty_cell))]
 
-    if checkThreat(symbol, antiDiagonalLine):
-        return [(2 - antiDiagonalLine.index(emptyCell), antiDiagonalLine.index(emptyCell))]
+    if check_threat(symbol, anti_diagonal_line):
+        return [(2 - anti_diagonal_line.index(empty_cell), anti_diagonal_line.index(empty_cell))]
 
     return None
 
 
-def checkOpponentWinningMove(opponent: str, rowLines, columnLines, diagonalLine, antiDiagonalLine) -> list[tuple[int | Any, Any]] | None:
-    return checkWinningMove(opponent, rowLines, columnLines, diagonalLine, antiDiagonalLine)
+def check_opponent_winning_move(opponent: str, row_lines, column_lines, diagonal_line, anti_diagonal_line) -> \
+                                                                                    list[tuple[int | Any, Any]] | None:
+    return check_winning_move(opponent, row_lines, column_lines, diagonal_line, anti_diagonal_line)
 
 
-def findForkMove(symbol: str, gameBoard: list[list[str]]) -> list[tuple[int, int]] | None:
-    alternativeMoves = []
+def find_fork_move(symbol: str, game_board: list[list[str]]) -> list[tuple[int, int]] | None:
+    alternative_moves = []
 
-    def isFork():
-        rowLines, columnLines, diagonalLine, antiDiagonalLine = extractLines(gameBoard)
+    def is_fork():
+        row_lines, column_lines, diagonal_line, anti_diagonal_line = extract_lines(game_board)
         threats = 0
-        for row in rowLines:
-            if checkThreat(symbol, row):
+        for row in row_lines:
+            if check_threat(symbol, row):
                 threats += 1
-        for col in columnLines:
-            if checkThreat(symbol, col):
+        for col in column_lines:
+            if check_threat(symbol, col):
                 threats += 1
-        if checkThreat(symbol, diagonalLine):
+        if check_threat(symbol, diagonal_line):
             threats += 1
-        if checkThreat(symbol, antiDiagonalLine):
+        if check_threat(symbol, anti_diagonal_line):
             threats += 1
         if threats == 1:
-            alternativeMoves.append((i, j))
+            alternative_moves.append((i, j))
         return threats >= 2
 
-    forkMoves = []
+    fork_moves = []
     for i in range(3):
         for j in range(3):
-            if gameBoard[i][j] == emptyCell:
-                gameBoard[i][j] = symbol
-                if isFork():
-                    forkMoves.append((i, j))
-                gameBoard[i][j] = emptyCell
+            if game_board[i][j] == empty_cell:
+                game_board[i][j] = symbol
+                if is_fork():
+                    fork_moves.append((i, j))
+                game_board[i][j] = empty_cell
 
-    return forkMoves if len(forkMoves) > 0 else alternativeMoves if len(alternativeMoves) > 0 else None
+    return fork_moves if len(fork_moves) > 0 else alternative_moves if len(alternative_moves) > 0 else None
