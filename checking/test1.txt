@@ -1,2 +1,0 @@
-function por(one, two){return one * two;}
-por(1,2);
